@@ -64,9 +64,6 @@ task deleteLibs(type: Delete) {
     delete 'libs'
 }
 
-//task addCP(dependsOn: ['classes'], type: JavaExec) {
-//    classpath = 'libs'
-//}
 
 test {
     jvmArgs += ['-Djava.library.path=./libs']
