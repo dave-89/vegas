@@ -27,11 +27,20 @@ dependencies {
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }
 
+task createLibsFolder(type:Exec) {
+    commandLine 'mkdir', '-p', 'libs'
+    ext.output = {
+        return standardOutput.toString()
+    }
+}
 
 task createBuildForCPP(type:Exec) {
-	def newCPP = "${buildDir}/cpp"
-	commandLine 'mkdir', '-p', newCPP
-	commandLine 'mkdir', '-p', 'libs'
+    dependsOn createLibsFolder
+    def newCPP = "${projectDir}/build/cpp"
+    commandLine 'mkdir', '-p', newCPP
+    ext.output = {
+        return standardOutput.toString()
+    }
 }
 
 task compileCPP(type:Exec) {
@@ -43,14 +52,30 @@ task compileCPP(type:Exec) {
 }
 
 task addLibs(type: Copy) {
+    dependsOn compileCPP
 	from "${buildDir}/cpp/libBridgeServiceImpl.so"
 	into 'libs'
+    ext.output = {
+        return standardOutput.toString()
+    }
 }
 
-bootRun {
+task deleteLibs(type: Delete) {
+    delete 'libs'
+}
+
+//task addCP(dependsOn: ['classes'], type: JavaExec) {
+//    classpath = 'libs'
+//}
+
+test {
     jvmArgs += ['-Djava.library.path=./libs']
 }
 
+tasks.withType(JavaExec) {
+    systemProperty "java.library.path", file("./libs")
+}
 
-build.dependsOn(compileCPP)
-bootRun.dependsOn(addLibs)
+build.dependsOn(addLibs)
+clean.dependsOn(deleteLibs)
+bootRun.dependsOn(build)
